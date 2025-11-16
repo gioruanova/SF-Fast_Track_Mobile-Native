@@ -1,10 +1,12 @@
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ClaimsList from '../components/ClaimsList';
+import PageHeader from '../components/PageHeader';
 import PageTitle from '../components/PageTitle';
 import QuickContacts from '../components/QuickContacts';
+import ScreenLayout from '../components/ScreenLayout';
 import WorkloadToggle from '../components/WorkloadToggle';
 import { COLORS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -45,19 +47,17 @@ export default function DashboardScreen() {
     setIsRefreshingClosed(false);
   };
 
-  return (
-    <View style={styles.container}>
-      {user?.company_status !== 1 ? (
-        <ScrollView style={styles.content}>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Contacte a su administrador</Text>
-          </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-            <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      ) : (
-        <ScrollView style={styles.content}>
+  return user?.company_status !== 1 ? (
+    <ScreenLayout>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Contacte a su administrador</Text>
+      </View>
+      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+        <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
+      </TouchableOpacity>
+    </ScreenLayout>
+  ) : (
+    <ScreenLayout>
           <View style={styles.sectionContainer}>
             <Text style={styles.welcomeText}>Bienvenido/a {user?.user_name}</Text>
           </View>
@@ -70,20 +70,12 @@ export default function DashboardScreen() {
           </View>
 
           <View style={styles.sectionContainer}>
-            <View style={styles.headerContainer}>
-              <PageTitle style={styles.titleInHeader}>Reclamos Abiertos (Últimos 5)</PageTitle>
-              <TouchableOpacity 
-                style={styles.refreshButton} 
-                onPress={handleRefreshOpen}
-                disabled={isRefreshingOpen || openClaims.isLoading}
-              >
-                {isRefreshingOpen ? (
-                  <ActivityIndicator size="small" color={COLORS.primary} />
-                ) : (
-                  <Text style={styles.refreshIcon}>🔄</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            <PageHeader 
+              title="Reclamos Abiertos (Últimos 5)"
+              onRefresh={handleRefreshOpen}
+              isRefreshing={isRefreshingOpen}
+              disabled={openClaims.isLoading}
+            />
             <ClaimsList
               claims={openClaimsToShow}
               isLoading={openClaims.isLoading}
@@ -96,20 +88,12 @@ export default function DashboardScreen() {
           </View>
 
           <View style={styles.sectionContainer}>
-            <View style={styles.headerContainer}>
-              <PageTitle style={styles.titleInHeader}>Reclamos Cerrados (Últimos 5)</PageTitle>
-              <TouchableOpacity 
-                style={styles.refreshButton} 
-                onPress={handleRefreshClosed}
-                disabled={isRefreshingClosed || closedClaims.isLoading}
-              >
-                {isRefreshingClosed ? (
-                  <ActivityIndicator size="small" color={COLORS.primary} />
-                ) : (
-                  <Text style={styles.refreshIcon}>🔄</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            <PageHeader 
+              title="Reclamos Cerrados (Últimos 5)"
+              onRefresh={handleRefreshClosed}
+              isRefreshing={isRefreshingClosed}
+              disabled={closedClaims.isLoading}
+            />
             <ClaimsList
               claims={closedClaimsToShow}
               isLoading={closedClaims.isLoading}
@@ -120,58 +104,18 @@ export default function DashboardScreen() {
               onViewMore={() => navigation.navigate('ClosedClaims')}
             />
           </View>
-        </ScrollView>
-      )}
-    </View>
+        </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-  },
   sectionContainer: {
     marginBottom: 20,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    gap: 12,
-  },
-  titleInHeader: {
-    flex: 1,
-    marginBottom: 0,
-    borderBottomWidth: 0,
-    paddingBottom: 0,
-  },
-  refreshButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#F5F5F5',
-    minWidth: 40,
-    minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  refreshIcon: {
-    fontSize: 20,
   },
   welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.black,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.black,
-  },
-  content: {
-    flex: 1,
-    padding: 24,
   },
   card: {
     padding: 20,

@@ -31,6 +31,7 @@ function Navigation() {
             {() => (
               <AppProviders>
                 <DrawerNavigator />
+                
               </AppProviders>
             )}
           </Stack.Screen>
@@ -38,6 +39,7 @@ function Navigation() {
           <Stack.Screen name="Login" component={LoginScreen} />
         )}
       </Stack.Navigator>
+      
     </NavigationContainer>
   );
 }

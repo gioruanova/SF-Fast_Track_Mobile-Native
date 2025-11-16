@@ -5,7 +5,6 @@ type ClaimFilter = 'all' | 'open' | 'closed';
 
 interface UseClaimsOptions {
   filter?: ClaimFilter;
-  limit?: number;
 }
 
 interface UseClaimsReturn {
@@ -16,7 +15,7 @@ interface UseClaimsReturn {
 }
 
 export function useClaims(options: UseClaimsOptions = {}): UseClaimsReturn {
-  const { filter = 'all', limit } = options;
+  const { filter = 'all' } = options;
 
   const [claims, setClaims] = useState<Claim[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,10 +41,6 @@ export function useClaims(options: UseClaimsOptions = {}): UseClaimsReturn {
           );
         }
 
-        if (limit && limit > 0) {
-          filteredClaims = filteredClaims.slice(0, limit);
-        }
-
         setClaims(filteredClaims);
       } else {
         setError(response.error || 'Error al cargar reclamos');
@@ -55,7 +50,7 @@ export function useClaims(options: UseClaimsOptions = {}): UseClaimsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [filter, limit]);
+  }, [filter]);
 
   useEffect(() => {
     fetchClaims();

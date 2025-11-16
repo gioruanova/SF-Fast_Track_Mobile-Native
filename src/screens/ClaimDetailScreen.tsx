@@ -1,9 +1,11 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import BackToHomeButton from '../components/BackToHomeButton';
+import PageHeader from '../components/PageHeader';
 import PageTitle from '../components/PageTitle';
 import QuickContacts from '../components/QuickContacts';
+import ScreenLayout from '../components/ScreenLayout';
 import { COLORS } from '../constants/theme';
 import { Claim, getClaimDetail, updateClaim } from '../services/claims.service';
 import { RootDrawerParamList } from '../types/navigation';
@@ -69,13 +71,13 @@ export default function ClaimDetailScreen() {
 
   if (error || !claim) {
     return (
-      <ScrollView style={styles.container}>
+      <ScreenLayout>
         <PageTitle>Detalle del Reclamo</PageTitle>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error || 'Reclamo no encontrado'}</Text>
         </View>
         <BackToHomeButton destination="OpenClaims" text="Volver a Reclamos Abiertos" icon="📋" />
-      </ScrollView>
+      </ScreenLayout>
     );
   }
 
@@ -89,6 +91,18 @@ export default function ClaimDetailScreen() {
 
   const formatTime = (timeString: string) => {
     return timeString?.slice(0, 5) || '';
+  };
+
+  const formatCurrency = (amount: string | number | null) => {
+    if (!amount) return '$0';
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(numAmount)) return '$0';
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(numAmount);
   };
 
   const handleOpenMap = async () => {
@@ -175,7 +189,7 @@ export default function ClaimDetailScreen() {
       if (presupuesto.trim()) {
         const presupuestoNum = parseFloat(presupuesto);
         if (!isNaN(presupuestoNum)) {
-          updateData.reclamo_presupuesto = presupuestoNum;
+          updateData.reclamo_presupuesto = presupuestoNum.toString();
         }
       }
 
@@ -215,21 +229,13 @@ export default function ClaimDetailScreen() {
   );
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.headerContainer}>
-        <PageTitle style={styles.titleInHeader}>{`Detalle del Reclamo #${claim.reclamo_id}`}</PageTitle>
-        <TouchableOpacity
-          style={styles.refreshButton}
-          onPress={handleRefresh}
-          disabled={isRefreshing || isLoading}
-        >
-          {isRefreshing ? (
-            <ActivityIndicator size="small" color={COLORS.primary} />
-          ) : (
-            <Text style={styles.refreshIcon}>🔄</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+    <ScreenLayout>
+      <PageHeader 
+        title={`Detalle del Reclamo #${claim.reclamo_id}`}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+        disabled={isLoading}
+      />
 
       <View style={styles.card}>
         <View style={styles.statusContainer}>
@@ -439,58 +445,26 @@ export default function ClaimDetailScreen() {
               {claim.reclamo_presupuesto && (
                 <View style={styles.infoRow}>
                   <Text style={styles.label}>Presupuesto:</Text>
-                  <Text style={styles.value}>{claim.reclamo_presupuesto}</Text>
+                  <Text style={styles.value}>{formatCurrency(claim.reclamo_presupuesto)}</Text>
                 </View>
               )}
             </View>
           </>
         )}
       </View>
-      {claim.reclamo_estado == "CERRADO" || claim.reclamo_estado == "CANCELADO" ? (
+      
+      {claim.reclamo_estado === 'CERRADO' || claim.reclamo_estado === 'CANCELADO' ? (
         <BackToHomeButton destination="ClosedClaims" text="Volver a Reclamos Cerrados" icon="✅" />
       ) : (
         <BackToHomeButton destination="OpenClaims" text="Volver a Reclamos Abiertos" icon="📋" />
-      )
-      }
-
-      <BackToHomeButton />
-    </ScrollView>
+      )}
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    backgroundColor: COLORS.white,
-  },
   sectionContainer: {
     marginBottom: 20,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    gap: 12,
-  },
-  titleInHeader: {
-    flex: 1,
-    marginBottom: 0,
-    borderBottomWidth: 0,
-    paddingBottom: 0,
-  },
-  refreshButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#F5F5F5',
-    minWidth: 40,
-    minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  refreshIcon: {
-    fontSize: 20,
   },
   centerContainer: {
     flex: 1,
