@@ -58,53 +58,55 @@ export default function DashboardScreen() {
     </ScreenLayout>
   ) : (
     <ScreenLayout>
-          <View style={styles.sectionContainer}>
-            <Text style={styles.welcomeText}>Bienvenido/a {user?.user_name}</Text>
-          </View>
+      <View style={styles.sectionContainer}>
+        <Text style={styles.welcomeText}>Bienvenido/a {user?.user_name}</Text>
+        <Text style={styles.label}>Empresa: {user?.company_name}</Text>
+        <Text style={styles.label}>Estado Suscripcion: {user?.company_status === 1 ? 'ACTIVA' : 'INACTIVA'.toUpperCase()}</Text>
+      </View>
 
-          <WorkloadToggle />
+      <WorkloadToggle />
 
-          <View style={styles.sectionContainer}>
-            <PageTitle>Contactos Rápidos</PageTitle>
-            <QuickContacts />
-          </View>
+      <View style={styles.sectionContainer}>
+        <PageTitle>Contactos Rápidos</PageTitle>
+        <QuickContacts />
+      </View>
 
-          <View style={styles.sectionContainer}>
-            <PageHeader 
-              title="Reclamos Abiertos (Últimos 5)"
-              onRefresh={handleRefreshOpen}
-              isRefreshing={isRefreshingOpen}
-              disabled={openClaims.isLoading}
-            />
-            <ClaimsList
-              claims={openClaimsToShow}
-              isLoading={openClaims.isLoading}
-              error={openClaims.error}
-              emptyMessage="No hay reclamos abiertos"
-              onClaimPress={handleClaimPress}
-              showViewMore={hasMoreOpenClaims}
-              onViewMore={() => navigation.navigate('OpenClaims')}
-            />
-          </View>
+      <View style={styles.sectionContainer}>
+        <PageHeader
+          title="Reclamos Abiertos (Últimos 5)"
+          onRefresh={handleRefreshOpen}
+          isRefreshing={isRefreshingOpen}
+          disabled={openClaims.isLoading}
+        />
+        <ClaimsList
+          claims={openClaimsToShow}
+          isLoading={openClaims.isLoading}
+          error={openClaims.error}
+          emptyMessage="No hay reclamos abiertos"
+          onClaimPress={handleClaimPress}
+          showViewMore={hasMoreOpenClaims}
+          onViewMore={() => navigation.navigate('OpenClaims')}
+        />
+      </View>
 
-          <View style={styles.sectionContainer}>
-            <PageHeader 
-              title="Reclamos Cerrados (Últimos 5)"
-              onRefresh={handleRefreshClosed}
-              isRefreshing={isRefreshingClosed}
-              disabled={closedClaims.isLoading}
-            />
-            <ClaimsList
-              claims={closedClaimsToShow}
-              isLoading={closedClaims.isLoading}
-              error={closedClaims.error}
-              emptyMessage="No hay reclamos cerrados"
-              onClaimPress={handleClaimPress}
-              showViewMore={hasMoreClosedClaims}
-              onViewMore={() => navigation.navigate('ClosedClaims')}
-            />
-          </View>
-        </ScreenLayout>
+      <View style={styles.sectionContainer}>
+        <PageHeader
+          title="Reclamos Cerrados (Últimos 5)"
+          onRefresh={handleRefreshClosed}
+          isRefreshing={isRefreshingClosed}
+          disabled={closedClaims.isLoading}
+        />
+        <ClaimsList
+          claims={closedClaimsToShow}
+          isLoading={closedClaims.isLoading}
+          error={closedClaims.error}
+          emptyMessage="No hay reclamos cerrados"
+          onClaimPress={handleClaimPress}
+          showViewMore={hasMoreClosedClaims}
+          onViewMore={() => navigation.navigate('ClosedClaims')}
+        />
+      </View>
+    </ScreenLayout>
   );
 }
 
