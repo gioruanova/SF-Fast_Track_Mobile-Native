@@ -1,10 +1,11 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import BackToHomeButton from '../components/BackToHomeButton';
 import PageTitle from '../components/PageTitle';
+import QuickContacts from '../components/QuickContacts';
 import { COLORS } from '../constants/theme';
-import { Claim, getClaimDetail } from '../services/claims.service';
+import { Claim, getClaimDetail, updateClaim } from '../services/claims.service';
 import { RootDrawerParamList } from '../types/navigation';
 
 type ClaimDetailScreenRouteProp = RouteProp<RootDrawerParamList, 'ClaimDetail'>;
@@ -16,27 +17,39 @@ export default function ClaimDetailScreen() {
   const [claim, setClaim] = useState<Claim | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const [selectedEstado, setSelectedEstado] = useState<string>('');
+  const [notaCierre, setNotaCierre] = useState<string>('');
+  const [presupuesto, setPresupuesto] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fetchClaimDetail = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await getClaimDetail(reclamoId);
+
+      if (response.success && response.data) {
+        setClaim(response.data);
+      } else {
+        setError(response.error || 'Error al cargar el reclamo');
+      }
+    } catch (err) {
+      setError('Error de conexión');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchClaimDetail();
+    setIsRefreshing(false);
+  };
 
   useEffect(() => {
-    const fetchClaimDetail = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await getClaimDetail(reclamoId);
-
-        if (response.success && response.data) {
-          setClaim(response.data);
-        } else {
-          setError(response.error || 'Error al cargar el reclamo');
-        }
-      } catch (err) {
-        setError('Error de conexión');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (reclamoId) {
       fetchClaimDetail();
     } else {
@@ -61,7 +74,7 @@ export default function ClaimDetailScreen() {
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error || 'Reclamo no encontrado'}</Text>
         </View>
-        <BackToHomeButton />
+        <BackToHomeButton destination="OpenClaims" text="Volver a Reclamos Abiertos" icon="📋" />
       </ScrollView>
     );
   }
@@ -94,16 +107,138 @@ export default function ClaimDetailScreen() {
     }
   };
 
+  const handleCallPhone = async (phoneNumber: string) => {
+    const url = `tel:${phoneNumber}`;
+
+    try {
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'No se puede realizar la llamada en este dispositivo');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo realizar la llamada');
+    }
+  };
+
+  const handleSendEmail = async (email: string) => {
+    const url = `mailto:${email}`;
+
+    try {
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'No se puede abrir el cliente de correo en este dispositivo');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo abrir el cliente de correo');
+    }
+  };
+
+  const handleOpenUrl = async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'No se puede abrir el enlace en este dispositivo');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo abrir el enlace');
+    }
+  };
+
+  const handleSubmitGestion = async () => {
+    if (!selectedEstado) {
+      Alert.alert('Error', 'Debe seleccionar un estado');
+      return;
+    }
+
+    if (!notaCierre.trim()) {
+      Alert.alert('Error', 'Debe agregar un comentario');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const updateData: any = {
+        reclamo_estado: selectedEstado,
+        reclamo_nota_cierre: notaCierre.trim(),
+      };
+
+      if (presupuesto.trim()) {
+        const presupuestoNum = parseFloat(presupuesto);
+        if (!isNaN(presupuestoNum)) {
+          updateData.reclamo_presupuesto = presupuestoNum;
+        }
+      }
+
+      const response = await updateClaim(reclamoId, updateData);
+
+      if (response.success) {
+        Alert.alert('Éxito', 'Reclamo actualizado correctamente', [
+          {
+            text: 'OK',
+            onPress: () => {
+              setSelectedEstado('');
+              setNotaCierre('');
+              setPresupuesto('');
+
+              const fetchClaimDetail = async () => {
+                const refreshResponse = await getClaimDetail(reclamoId);
+                if (refreshResponse.success && refreshResponse.data) {
+                  setClaim(refreshResponse.data);
+                }
+              };
+              fetchClaimDetail();
+            },
+          },
+        ]);
+      } else {
+        Alert.alert('Error', response.error || 'No se pudo actualizar el reclamo');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Error al actualizar el reclamo');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const estadosDisponibles = ['ABIERTO', 'EN PROCESO', 'CERRADO', 'CANCELADO', 'EN PAUSA'].filter(
+    (estado) => estado !== claim?.reclamo_estado
+  );
+
   return (
     <ScrollView style={styles.container}>
-      <PageTitle>{`Detalle del Reclamo #${claim.reclamo_id}`}</PageTitle>
+      <View style={styles.headerContainer}>
+        <PageTitle style={styles.titleInHeader}>{`Detalle del Reclamo #${claim.reclamo_id}`}</PageTitle>
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={handleRefresh}
+          disabled={isRefreshing || isLoading}
+        >
+          {isRefreshing ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <Text style={styles.refreshIcon}>🔄</Text>
+          )}
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.card}>
         <View style={styles.statusContainer}>
           <Text
             style={[
               styles.statusBadge,
-              claim.reclamo_estado === 'ABIERTO' ? styles.statusOpen : styles.statusClosed,
+              claim.reclamo_estado !== 'CERRADO' && claim.reclamo_estado !== 'CANCELADO'
+                ? styles.statusOpen
+                : styles.statusClosed,
             ]}
           >
             {claim.reclamo_estado}
@@ -111,6 +246,11 @@ export default function ClaimDetailScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>Información General</Text>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>N°:</Text>
+          <Text style={styles.value}>{claim.reclamo_id}</Text>
+        </View>
 
         <View style={styles.sectionFlex}>
           <View style={styles.infoRow}>
@@ -164,11 +304,15 @@ export default function ClaimDetailScreen() {
           <View style={styles.sectionFlex}>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Teléfono:</Text>
-              <Text style={styles.value}>{claim.cliente_phone}</Text>
+              <TouchableOpacity onPress={() => handleCallPhone(claim.cliente_phone)}>
+                <Text style={[styles.value, styles.linkValue]}>📞 {claim.cliente_phone}</Text>
+              </TouchableOpacity>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Email:</Text>
-              <Text style={styles.value}>{claim.cliente_email}</Text>
+              <TouchableOpacity onPress={() => handleSendEmail(claim.cliente_email)}>
+                <Text style={[styles.value, styles.linkValue]}>✉️ {claim.cliente_email}</Text>
+              </TouchableOpacity>
             </View>
           </View>
           <View style={styles.infoRow}>
@@ -176,9 +320,17 @@ export default function ClaimDetailScreen() {
             <Text style={styles.value}>{claim.cliente_direccion}</Text>
           </View>
 
+
+
+
           <TouchableOpacity style={styles.mapButton} onPress={handleOpenMap}>
             <Text style={styles.mapButtonText}>📍 Ver en el mapa</Text>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.sectionContainer}>
+          <PageTitle>Contactos Rápidos</PageTitle>
+          <QuickContacts />
         </View>
 
         <View style={styles.divider} />
@@ -193,9 +345,87 @@ export default function ClaimDetailScreen() {
             <Text style={styles.label}>Detalle:</Text>
             <Text style={styles.value}>{claim.reclamo_detalle}</Text>
           </View>
+          {claim.reclamo_url && (
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>URL:</Text>
+              <TouchableOpacity onPress={() => handleOpenUrl(claim.reclamo_url!)}>
+                <Text style={[styles.value, styles.linkValue]}>🔗 {claim.reclamo_url}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
-        {claim.reclamo_estado === 'CERRADO' && (
+        {claim.reclamo_estado !== 'CERRADO' && claim.reclamo_estado !== 'CANCELADO' && (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Gestión del Reclamo</Text>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Estado *</Text>
+                <View style={styles.estadosContainer}>
+                  {estadosDisponibles.map((estado) => (
+                    <TouchableOpacity
+                      key={estado}
+                      style={[
+                        styles.estadoButton,
+                        selectedEstado === estado && styles.estadoButtonSelected,
+                      ]}
+                      onPress={() => setSelectedEstado(estado)}
+                    >
+                      <Text
+                        style={[
+                          styles.estadoButtonText,
+                          selectedEstado === estado && styles.estadoButtonTextSelected,
+                        ]}
+                      >
+                        {estado}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Comentario *</Text>
+                <TextInput
+                  style={styles.textArea}
+                  value={notaCierre}
+                  onChangeText={setNotaCierre}
+                  placeholder="Ingrese un comentario sobre el cambio de estado"
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Presupuesto (opcional)</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={presupuesto}
+                  onChangeText={setPresupuesto}
+                  placeholder="Ingrese el presupuesto"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+                onPress={handleSubmitGestion}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color={COLORS.white} />
+                ) : (
+                  <Text style={styles.submitButtonText}>Guardar Cambios</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+
+        {(claim.reclamo_estado === 'CERRADO' || claim.reclamo_estado === 'CANCELADO') && (
           <>
             <View style={styles.divider} />
             <View style={styles.section}>
@@ -216,6 +446,12 @@ export default function ClaimDetailScreen() {
           </>
         )}
       </View>
+      {claim.reclamo_estado == "CERRADO" || claim.reclamo_estado == "CANCELADO" ? (
+        <BackToHomeButton destination="ClosedClaims" text="Volver a Reclamos Cerrados" icon="✅" />
+      ) : (
+        <BackToHomeButton destination="OpenClaims" text="Volver a Reclamos Abiertos" icon="📋" />
+      )
+      }
 
       <BackToHomeButton />
     </ScrollView>
@@ -227,6 +463,34 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     backgroundColor: COLORS.white,
+  },
+  sectionContainer: {
+    marginBottom: 20,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 12,
+  },
+  titleInHeader: {
+    flex: 1,
+    marginBottom: 0,
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#F5F5F5',
+    minWidth: 40,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  refreshIcon: {
+    fontSize: 20,
   },
   centerContainer: {
     flex: 1,
@@ -298,14 +562,18 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: '800',
+    color: COLORS.black,
     marginBottom: 2,
   },
   value: {
     fontSize: 14,
     color: COLORS.black,
     lineHeight: 20,
+  },
+  linkValue: {
+    color: COLORS.primary,
+    fontWeight: '600',
   },
   mapButton: {
     backgroundColor: COLORS.primary,
@@ -318,6 +586,73 @@ const styles = StyleSheet.create({
   mapButtonText: {
     fontSize: 15,
     fontWeight: '600',
+    color: COLORS.white,
+  },
+  formGroup: {
+    marginBottom: 16,
+  },
+  formLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.black,
+    marginBottom: 8,
+  },
+  estadosContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  estadoButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    backgroundColor: COLORS.white,
+  },
+  estadoButtonSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  estadoButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.black,
+  },
+  estadoButtonTextSelected: {
+    color: COLORS.white,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: COLORS.white,
+  },
+  textArea: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: COLORS.white,
+    minHeight: 100,
+  },
+  submitButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#999',
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
     color: COLORS.white,
   },
 });

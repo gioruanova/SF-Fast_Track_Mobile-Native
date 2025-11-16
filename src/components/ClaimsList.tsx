@@ -60,27 +60,42 @@ export default function ClaimsList({
     return `${fecha} ${horaDesde}`;
   };
 
+  const sortedClaims = [...claims].sort((a, b) => {
+    if (!a.agenda_fecha && !b.agenda_fecha) return 0;
+    if (!a.agenda_fecha) return 1;
+    if (!b.agenda_fecha) return -1;
+    
+    const dateA = new Date(a.agenda_fecha).getTime();
+    const dateB = new Date(b.agenda_fecha).getTime();
+    
+    return dateA - dateB;
+  });
+
   return (
     <View style={styles.container}>
-      {claims.map((claim) => (
-        <View
-          key={claim.reclamo_id}
-          style={[
-            styles.claimCard,
-            claim.reclamo_estado === 'ABIERTO' ? styles.claimOpen : styles.claimClosed,
-          ]}
-        >
-          <View style={styles.claimHeader}>
-            <Text style={styles.claimNumber}>N°: {claim.reclamo_id}</Text>
-            {onClaimPress && claim.reclamo_estado === 'ABIERTO' && (
-              <TouchableOpacity
-                style={styles.viewButton}
-                onPress={() => onClaimPress(claim)}
-              >
-                <Text style={styles.viewButtonText}>Ver</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+      {sortedClaims.map((claim) => {
+        const isOpen = claim.reclamo_estado !== 'CERRADO' && claim.reclamo_estado !== 'CANCELADO';
+        
+        return (
+          <View
+            key={claim.reclamo_id}
+            style={[
+              styles.claimCard,
+              isOpen ? styles.claimOpen : styles.claimClosed,
+            ]}
+          >
+            <View style={styles.claimHeader}>
+              <Text style={styles.claimNumber}>N°: {claim.reclamo_id}</Text>
+              <Text style={styles.claimNumber}>{claim.reclamo_estado}</Text>
+              {onClaimPress && (
+                <TouchableOpacity
+                  style={styles.viewButton}
+                  onPress={() => onClaimPress(claim)}
+                >
+                  <Text style={styles.viewButtonText}>Ver</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
           <View style={styles.claimRow}>
             <Text style={styles.detailLabel}>Cliente:</Text>
@@ -92,7 +107,8 @@ export default function ClaimsList({
             <Text style={styles.detailValue}>{formatCita(claim)}</Text>
           </View>
         </View>
-      ))}
+        );
+      })}
 
       {showViewMore && onViewMore && (
         <TouchableOpacity style={styles.viewMoreButton} onPress={onViewMore}>

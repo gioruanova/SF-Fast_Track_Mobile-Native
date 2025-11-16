@@ -23,7 +23,7 @@ export interface Claim {
   agenda_fecha: string;
   agenda_hora_desde: string;
   agenda_hora_hasta: string;
-  reclamo_estado: 'ABIERTO' | 'CERRADO';
+  reclamo_estado: 'ABIERTO' | 'EN PROCESO' | 'EN PAUSA' | 'CERRADO' | 'CANCELADO';
   reclamo_nota_cierre: string | null;
   reclamo_presupuesto: string | null;
   updated_at: string;

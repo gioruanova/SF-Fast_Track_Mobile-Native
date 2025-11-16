@@ -1,7 +1,7 @@
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ClaimsList from '../components/ClaimsList';
 import PageTitle from '../components/PageTitle';
 import QuickContacts from '../components/QuickContacts';
@@ -21,6 +21,9 @@ export default function DashboardScreen() {
   const openClaims = useClaims({ filter: 'open' });
   const closedClaims = useClaims({ filter: 'closed' });
 
+  const [isRefreshingOpen, setIsRefreshingOpen] = useState(false);
+  const [isRefreshingClosed, setIsRefreshingClosed] = useState(false);
+
   const openClaimsToShow = openClaims.claims.slice(0, 5);
   const closedClaimsToShow = closedClaims.claims.slice(0, 5);
   const hasMoreOpenClaims = openClaims.claims.length > 5;
@@ -28,6 +31,18 @@ export default function DashboardScreen() {
 
   const handleClaimPress = (claim: Claim) => {
     navigation.navigate('ClaimDetail', { reclamoId: claim.reclamo_id });
+  };
+
+  const handleRefreshOpen = async () => {
+    setIsRefreshingOpen(true);
+    await openClaims.refetch();
+    setIsRefreshingOpen(false);
+  };
+
+  const handleRefreshClosed = async () => {
+    setIsRefreshingClosed(true);
+    await closedClaims.refetch();
+    setIsRefreshingClosed(false);
   };
 
   return (
@@ -55,7 +70,20 @@ export default function DashboardScreen() {
           </View>
 
           <View style={styles.sectionContainer}>
-            <PageTitle>Reclamos Abiertos (Últimos 5)</PageTitle>
+            <View style={styles.headerContainer}>
+              <PageTitle style={styles.titleInHeader}>Reclamos Abiertos (Últimos 5)</PageTitle>
+              <TouchableOpacity 
+                style={styles.refreshButton} 
+                onPress={handleRefreshOpen}
+                disabled={isRefreshingOpen || openClaims.isLoading}
+              >
+                {isRefreshingOpen ? (
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                ) : (
+                  <Text style={styles.refreshIcon}>🔄</Text>
+                )}
+              </TouchableOpacity>
+            </View>
             <ClaimsList
               claims={openClaimsToShow}
               isLoading={openClaims.isLoading}
@@ -68,12 +96,26 @@ export default function DashboardScreen() {
           </View>
 
           <View style={styles.sectionContainer}>
-            <PageTitle>Reclamos Cerrados (Últimos 5)</PageTitle>
+            <View style={styles.headerContainer}>
+              <PageTitle style={styles.titleInHeader}>Reclamos Cerrados (Últimos 5)</PageTitle>
+              <TouchableOpacity 
+                style={styles.refreshButton} 
+                onPress={handleRefreshClosed}
+                disabled={isRefreshingClosed || closedClaims.isLoading}
+              >
+                {isRefreshingClosed ? (
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                ) : (
+                  <Text style={styles.refreshIcon}>🔄</Text>
+                )}
+              </TouchableOpacity>
+            </View>
             <ClaimsList
               claims={closedClaimsToShow}
               isLoading={closedClaims.isLoading}
               error={closedClaims.error}
               emptyMessage="No hay reclamos cerrados"
+              onClaimPress={handleClaimPress}
               showViewMore={hasMoreClosedClaims}
               onViewMore={() => navigation.navigate('ClosedClaims')}
             />
@@ -91,6 +133,31 @@ const styles = StyleSheet.create({
   },
   sectionContainer: {
     marginBottom: 20,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 12,
+  },
+  titleInHeader: {
+    flex: 1,
+    marginBottom: 0,
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#F5F5F5',
+    minWidth: 40,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  refreshIcon: {
+    fontSize: 20,
   },
   welcomeText: {
     fontSize: 24,

@@ -33,9 +33,13 @@ export function useClaims(options: UseClaimsOptions = {}): UseClaimsReturn {
         let filteredClaims = response.data;
 
         if (filter === 'open') {
-          filteredClaims = filteredClaims.filter((c) => c.reclamo_estado === 'ABIERTO');
+          filteredClaims = filteredClaims.filter(
+            (c) => c.reclamo_estado !== 'CERRADO' && c.reclamo_estado !== 'CANCELADO'
+          );
         } else if (filter === 'closed') {
-          filteredClaims = filteredClaims.filter((c) => c.reclamo_estado === 'CERRADO');
+          filteredClaims = filteredClaims.filter(
+            (c) => c.reclamo_estado === 'CERRADO' || c.reclamo_estado === 'CANCELADO'
+          );
         }
 
         if (limit && limit > 0) {

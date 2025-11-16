@@ -3,14 +3,24 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../constants/theme';
 
-export default function BackToHomeButton() {
+interface BackToHomeButtonProps {
+  destination?: string;
+  text?: string;
+  icon?: string;
+}
+
+export default function BackToHomeButton({
+  destination = 'Dashboard',
+  text = 'Volver al Inicio',
+  icon = '🏠',
+}: BackToHomeButtonProps) {
   const navigation = useNavigation();
 
   const handlePress = () => {
     navigation.dispatch(DrawerActions.closeDrawer());
 
     setTimeout(() => {
-      navigation.navigate('Dashboard' as never);
+      navigation.navigate(destination as never);
     }, 100);
   };
 
@@ -22,8 +32,8 @@ export default function BackToHomeButton() {
           onPress={handlePress}
           activeOpacity={0.7}
         >
-          <Text style={styles.icon}>🏠</Text>
-          <Text style={styles.text}>Volver al Inicio</Text>
+          <Text style={styles.icon}>{icon}</Text>
+          <Text style={styles.text}>{text}</Text>
         </TouchableOpacity>
       </View>
     </>
