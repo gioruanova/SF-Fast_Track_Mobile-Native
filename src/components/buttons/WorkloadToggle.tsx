@@ -35,7 +35,7 @@ export default function WorkloadToggle() {
             false: COLORS.danger,
             true: COLORS.success,
           }}
-          thumbColor={COLORS.primary}
+          thumbColor={COLORS.white}
           ios_backgroundColor={COLORS.danger}
         />
       </View>
