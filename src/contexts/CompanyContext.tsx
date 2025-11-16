@@ -21,13 +21,12 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       const response = await getCompanyInfo();
 
-
       if (response.success && response.data) {
         setCompanyInfo(response.data);
       } else {
-        setError(response.message || 'Error al obtener información de la compañía');
+        setError(response.error || response.message || 'Error al obtener información de la compañía');
       }
-    } catch (err) {
+    } catch {
       setError('Error de conexión');
     } finally {
       setIsLoading(false);

@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  disableWorkload,
-  enableWorkload,
-  getWorkloadStatus,
-} from '../services/workload.service';
+import { disableWorkload, enableWorkload, getWorkloadStatus, } from '../services/workload.service';
+
 
 interface UseWorkloadReturn {
   enabled: boolean | null;
@@ -30,7 +27,7 @@ export function useWorkload(): UseWorkloadReturn {
         setError(response.error || 'Error al cargar estado');
         setEnabled(false);
       }
-    } catch (err) {
+    } catch {
       setError('Error de conexión');
       setEnabled(false);
     }
@@ -52,7 +49,7 @@ export function useWorkload(): UseWorkloadReturn {
       } else {
         setError(response.error || 'Error al cambiar estado');
       }
-    } catch (err) {
+    } catch {
       setError('Error de conexión');
     } finally {
       setIsLoading(false);

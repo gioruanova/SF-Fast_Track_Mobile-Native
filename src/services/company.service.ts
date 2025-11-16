@@ -17,6 +17,10 @@ export interface CompanyInfo {
   updated_at: string;
 }
 
+interface CompanyConfigResponse {
+  company: CompanyInfo;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -25,6 +29,25 @@ export interface ApiResponse<T> {
 }
 
 export async function getCompanyInfo(): Promise<ApiResponse<CompanyInfo>> {
-  return apiClient.get<CompanyInfo>('/customersApi/company/companyInfo');
+  try {
+    const response = await apiClient.get<CompanyConfigResponse>('/customersApi/company/config');
+    
+    if (response.success && response.data?.company) {
+      return {
+        success: true,
+        data: response.data.company,
+      };
+    }
+    
+    return {
+      success: false,
+      error: response.error || 'Error al obtener configuración de la compañía',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido',
+    };
+  }
 }
 

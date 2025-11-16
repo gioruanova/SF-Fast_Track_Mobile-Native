@@ -11,12 +11,12 @@ interface ApiResponse<T = any> {
 }
 
 let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (value: any) => void;
-  reject: (reason?: any) => void;
-}> = [];
+let failedQueue: {
+  resolve: (value: boolean) => void;
+  reject: (reason?: Error) => void;
+}[] = [];
 
-const processQueue = (error: any = null) => {
+const processQueue = (error: Error | null = null) => {
   failedQueue.forEach((promise) => {
     if (error) {
       promise.reject(error);
@@ -41,7 +41,7 @@ async function refreshToken(): Promise<boolean> {
       return true;
     }
     return false;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
@@ -90,7 +90,7 @@ async function makeRequest<T = any>(
         return makeRequest<T>(endpoint, options);
       } else {
         isRefreshing = false;
-        processQueue(new Error('Session expired'));
+        processQueue(new Error('Sesión expirada'));
         return {
           success: false,
           error: 'Sesión expirada',

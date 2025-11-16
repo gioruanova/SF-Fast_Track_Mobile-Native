@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { CLAIM_STATES } from '../constants/claimStates';
 import { Claim, getClaims } from '../services/claims.service';
 
 type ClaimFilter = 'all' | 'open' | 'closed';
@@ -33,11 +34,11 @@ export function useClaims(options: UseClaimsOptions = {}): UseClaimsReturn {
 
         if (filter === 'open') {
           filteredClaims = filteredClaims.filter(
-            (c) => c.reclamo_estado !== 'CERRADO' && c.reclamo_estado !== 'CANCELADO'
+            (c) => c.reclamo_estado !== CLAIM_STATES.CERRADO && c.reclamo_estado !== CLAIM_STATES.CANCELADO
           );
         } else if (filter === 'closed') {
           filteredClaims = filteredClaims.filter(
-            (c) => c.reclamo_estado === 'CERRADO' || c.reclamo_estado === 'CANCELADO'
+            (c) => c.reclamo_estado === CLAIM_STATES.CERRADO || c.reclamo_estado === CLAIM_STATES.CANCELADO
           );
         }
 
@@ -45,7 +46,7 @@ export function useClaims(options: UseClaimsOptions = {}): UseClaimsReturn {
       } else {
         setError(response.error || 'Error al cargar reclamos');
       }
-    } catch (err) {
+    } catch {
       setError('Error de conexión');
     } finally {
       setIsLoading(false);

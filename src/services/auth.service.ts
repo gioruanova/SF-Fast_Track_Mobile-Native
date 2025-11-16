@@ -5,9 +5,15 @@ export interface UserProfile {
   user_email: string;
   user_name: string;
   user_role: string;
+  user_dni?: string;
+  user_phone?: string;
   company_id: number;
   company_name: string;
   company_status: number;
+  company_phone: string;
+  company_email: string;
+  company_whatsapp: string;
+  company_telegram: string;
 }
 
 export interface ApiResponse<T = any> {
@@ -23,6 +29,14 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface UpdateProfileData {
+  user_complete_name?: string;
+  user_dni?: string;
+  user_phone?: string;
+  user_email?: string;
+  user_password?: string;
+}
+
 export const authService = {
   async login(credentials: LoginCredentials) {
     return apiClient.post('/publicApi/login', credentials);
@@ -30,6 +44,10 @@ export const authService = {
 
   async getProfile() {
     return apiClient.get<UserProfile>('/publicApi/profile');
+  },
+
+  async updateProfile(data: UpdateProfileData) {
+    return apiClient.put('/customersApi/profile/manage', data);
   },
 
   async refresh() {

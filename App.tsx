@@ -8,13 +8,13 @@ import { COLORS } from './src/constants/theme';
 import AppProviders from './src/contexts/AppProviders';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import DrawerNavigator from './src/navigation/DrawerNavigator';
-import LoginScreen from './src/screens/LoginScreen';
+import LoginScreen from './src/screens/auth/LoginScreen';
 
 const Stack = createNativeStackNavigator();
 
 function Navigation() {
   const { user, isLoading } = useAuth();
-
+  
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -31,7 +31,7 @@ function Navigation() {
             {() => (
               <AppProviders>
                 <DrawerNavigator />
-                
+
               </AppProviders>
             )}
           </Stack.Screen>
@@ -39,7 +39,7 @@ function Navigation() {
           <Stack.Screen name="Login" component={LoginScreen} />
         )}
       </Stack.Navigator>
-      
+
     </NavigationContainer>
   );
 }

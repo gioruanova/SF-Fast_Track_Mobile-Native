@@ -1,5 +1,6 @@
 import { apiClient } from './api';
 import { ApiResponse } from './auth.service';
+import type { ClaimState } from '../constants/claimStates';
 
 export interface Claim {
   company_id: number;
@@ -23,7 +24,7 @@ export interface Claim {
   agenda_fecha: string;
   agenda_hora_desde: string;
   agenda_hora_hasta: string;
-  reclamo_estado: 'ABIERTO' | 'EN PROCESO' | 'EN PAUSA' | 'CERRADO' | 'CANCELADO';
+  reclamo_estado: ClaimState;
   reclamo_nota_cierre: string | null;
   reclamo_presupuesto: string | null;
   updated_at: string;
@@ -37,9 +38,15 @@ export async function getClaimDetail(reclamoId: number): Promise<ApiResponse<Cla
   return apiClient.get<Claim>(`/customersApi/reclamos/profesional/gestion/${reclamoId}`);
 }
 
+export interface UpdateClaimData {
+  reclamo_estado?: Claim['reclamo_estado'];
+  reclamo_nota_cierre?: string;
+  reclamo_presupuesto?: string;
+}
+
 export async function updateClaim(
   reclamoId: number,
-  data: Partial<Claim>
+  data: UpdateClaimData
 ): Promise<ApiResponse<Claim>> {
   return apiClient.put<Claim>(`/customersApi/reclamos/profesional/gestion/${reclamoId}`, data);
 }

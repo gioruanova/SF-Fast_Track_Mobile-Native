@@ -12,6 +12,7 @@ interface AuthContextType {
     statusCode?: number;
   }>;
   logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else if (response.statusCode === 401) {
         setUser(null);
       }
-    } catch (error) {
+    } catch {
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -85,14 +86,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await authService.logout();
-    } catch (error) {
+    } catch {
     } finally {
       setUser(null);
     }
   };
 
+  const refreshProfile = async () => {
+    try {
+      const response = await authService.getProfile();
+      if (response.success && response.data) {
+        setUser(response.data);
+      }
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

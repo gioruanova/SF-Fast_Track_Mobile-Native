@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../../constants/theme';
+import Icons from '../ui/Icons';
 
 interface DrawerFooterProps {
   onSettingsPress: () => void;
@@ -11,12 +12,12 @@ export default function DrawerFooter({ onSettingsPress, onLogoutPress }: DrawerF
   return (
     <View style={styles.footer}>
       <TouchableOpacity style={styles.settingsItem} onPress={onSettingsPress}>
-        <Text style={styles.menuIcon}>⚙️</Text>
+        <Icons.SettingsIcon size={20} color={COLORS.black} />
         <Text style={styles.menuLabel}>Configuración de Perfil</Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity style={styles.logoutItem} onPress={onLogoutPress}>
-        <Text style={styles.menuIcon}>🚪</Text>
+        <Icons.LogOutIcon size={20} color={COLORS.danger} />
         <Text style={styles.logoutLabel}>Cerrar Sesión</Text>
       </TouchableOpacity>
     </View>
@@ -34,6 +35,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 8,
+    gap: 20,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
   },
   logoutItem: {
     flexDirection: 'row',
@@ -43,6 +47,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     backgroundColor: '#FFF5F5',
     borderRadius: 8,
+    gap: 20,
   },
   menuIcon: {
     fontSize: 20,
